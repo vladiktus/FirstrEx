@@ -14,15 +14,14 @@ public class GenreService {
     private GenreRepository genreRepository;
 
 
-
     public Genre addGenre(Genre genre) {
         List<Genre> listCheck = genreRepository.getGenreList();
-        if(!listCheck.contains(genre)){
-            genreRepository.addGenre(genre);
-        } else {
-            System.out.println("соси бибу");
+        for (Genre genreCheck : listCheck) {
+            if (genreCheck.getName().toLowerCase().equals(genre.getName().toLowerCase())) {
+                return null;
+            }
         }
-        return genre;
+        return  genreRepository.addGenre(genre);
     }
 
 }

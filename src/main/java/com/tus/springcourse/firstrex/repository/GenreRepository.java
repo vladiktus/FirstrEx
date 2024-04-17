@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public class GenreRepository {
     private List<Genre> genreList = new ArrayList<>();
-
+    private static int idGenre = 2;
 
     public GenreRepository() {
         Genre genre1 = Genre.builder().id(1).name("Drama").build();
@@ -26,7 +26,9 @@ public class GenreRepository {
     // Метод на добавление
     // добавление неименяемого списка
 
-    public Genre addGenre(Genre genre){
+    public Genre addGenre(Genre genre) {
+        idGenre++;
+        genre.setId(idGenre);
         genreList.add(genre);
         return genre;
     }
