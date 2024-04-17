@@ -1,6 +1,11 @@
 package com.tus.springcourse.firstrex.controller;
 
 import com.tus.springcourse.firstrex.model.Genre;
+import com.tus.springcourse.firstrex.service.GenreService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -12,6 +17,9 @@ public class GenreController {
 
     private List<Genre> genreList = new ArrayList<>();
 
+    @Autowired
+    private GenreService genreService;
+
     public GenreController() {
         Genre genre1 = Genre.builder().id(1).name("Drama").build();
         Genre genre2 = Genre.builder().id(2).name("Action").build();
@@ -20,21 +28,20 @@ public class GenreController {
     }
 
     @PostMapping("")
-    public Genre addGenre(@RequestBody Genre genre){
-        genre.setId(3);
-        genreList.add(genre);
-        return genre;
+    public ResponseEntity<Genre> addGenre(@RequestBody Genre genre, @RequestHeader("Authorization") String authorization) {
+        Genre response = genreService.addGenre(genre);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("")
-    public List<Genre> getListGenre(){
+    public List<Genre> getListGenre() {
         return genreList;
     }
 
     @GetMapping("/{id}")
-    public Genre getGenreById(@PathVariable int id){
-        for(Genre genre: genreList){
-            if(genre.getId() == id){
+    public Genre getGenreById(@PathVariable int id) {
+        for (Genre genre : genreList) {
+            if (genre.getId() == id) {
                 return genre;
             }
         }
@@ -42,9 +49,9 @@ public class GenreController {
     }
 
     @GetMapping("/search")
-    public Genre getGenreById(@RequestParam("value") String name){
-        for(Genre genre: genreList){
-            if(genre.getName().equals(name)){
+    public Genre getGenreById(@RequestParam("value") String name) {
+        for (Genre genre : genreList) {
+            if (genre.getName().equals(name)) {
                 return genre;
             }
         }
@@ -52,19 +59,18 @@ public class GenreController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteGenreById(@PathVariable int id){
-        for(Genre genre: genreList){
-            if(genre.getId() == id){
+    public void deleteGenreById(@PathVariable int id) {
+        for (Genre genre : genreList) {
+            if (genre.getId() == id) {
                 genreList.remove(genre);
             }
         }
     }
 
     @PutMapping("")
-    public Genre updateGenre(@RequestBody Genre genre){
+    public Genre updateGenre(@RequestBody Genre genre) {
         genreList.set(3, genre);
         return genre;
     }
 
-    
 }
