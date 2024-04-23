@@ -34,43 +34,34 @@ public class GenreController {
     }
 
     @GetMapping("")
-    public List<Genre> getListGenre() {
-        return genreList;
+    public ResponseEntity<List<Genre>> getListGenre() {
+        List<Genre> response = genreService.getListGenre();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/{id}")
-    public Genre getGenreById(@PathVariable int id) {
-        for (Genre genre : genreList) {
-            if (genre.getId() == id) {
-                return genre;
-            }
-        }
-        return null;
+    public ResponseEntity<Genre> getGenreById(@PathVariable int id) {
+        Genre response = genreService.getGenreById(id);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/search")
-    public Genre getGenreById(@RequestParam("value") String name) {
-        for (Genre genre : genreList) {
-            if (genre.getName().equals(name)) {
-                return genre;
-            }
-        }
-        return null;
+    public ResponseEntity<List<Genre>> searchGenreByName(@RequestParam("value") String name) {
+       List<Genre> response = genreService.searchGenreByName(name);
+       return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteGenreById(@PathVariable int id) {
-        for (Genre genre : genreList) {
-            if (genre.getId() == id) {
-                genreList.remove(genre);
-            }
-        }
+    public ResponseEntity<?> deleteGenreById(@PathVariable int id) {
+      genreService.deleteGenreById(id);
+//      return ResponseEntity.noContent().build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @PutMapping("")
-    public Genre updateGenre(@RequestBody Genre genre) {
-        genreList.set(3, genre);
-        return genre;
+    public ResponseEntity<Genre> updateGenre(@RequestBody Genre genre) {
+        Genre response = genreService.updateGenre(genre);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
 }
