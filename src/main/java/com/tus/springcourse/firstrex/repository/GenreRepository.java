@@ -79,15 +79,16 @@ public class GenreRepository {
     public List<Genre> searchGenreByName(String name) {
         List<Genre> matchesList = new ArrayList<>();
         try (Connection connection = dataSource.getConnection()) {
-            String sql = "SELECT * FROM genre WHERE name = ?";
+            String sql = "select * from genre where `name` like ?";
             PreparedStatement pst = connection.prepareStatement(sql);
-            pst.setString(1, name);
+            pst.setString(1, "%" + name + "%");
             ResultSet rs = pst.executeQuery();
-            if (rs.next()) {
-                    if (rs.getString("name").toLowerCase().contains(name.toLowerCase())) {
-                        Genre genre = Genre.builder().id(rs.getInt("id")).name(rs.getString("name")).build();
-                        matchesList.add(genre);
-                    }
+            while (rs.next()) {
+                Genre genre = Genre.builder()
+                        .id(rs.getInt("id"))
+                        .name(rs.getString("name"))
+                        .build();
+                matchesList.add(genre);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -104,9 +105,8 @@ public class GenreRepository {
 
     public void deleteGenreById(int id) {
         try (Connection connection = dataSource.getConnection()) {
-            String sql = "DELETE FROM genre WHERE id = ?";
+            String sql = "DELETE FROM genre WHERE id = " + id;
             PreparedStatement pst = connection.prepareStatement(sql);
-            pst.setInt(1,id);
             pst.executeUpdate(sql);
         } catch (SQLException e) {
             throw new RuntimeException(e);
