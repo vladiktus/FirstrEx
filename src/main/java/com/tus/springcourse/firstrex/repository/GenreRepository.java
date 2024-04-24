@@ -6,10 +6,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +38,16 @@ public class GenreRepository {
     }
 
     public Genre addGenre(Genre genre) {
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "INSERT INTO genre (name) VALUES (?)";
+            PreparedStatement pst = connection.prepareStatement(sql);
+            pst.setString(1,  genre.getName());
+            ResultSet rs = pst.executeQuery();
+            pst.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
 //        idGenre++;
 //        genre.setId(idGenre);
 //        genreList.add(genre);
@@ -49,12 +56,21 @@ public class GenreRepository {
     }
 
     public Genre getGenreById(int id) {
-//        for (Genre genre : genreList) {
-//            if (genre.getId() == id) {
-//                return genre;
-//            }
-//        }
-//        return null;
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT * FROM genre WHERE id = ?";
+            PreparedStatement pst = connection.prepareStatement(sql);
+            pst.setInt(1, id);
+            ResultSet rs = pst.executeQuery();
+            if(rs.next()){
+                Genre genre = Genre.builder()
+                        .id(rs.getInt("id"))
+                        .name(rs.getString("name"))
+                        .build();
+                return genre;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         return null;
     }
 
