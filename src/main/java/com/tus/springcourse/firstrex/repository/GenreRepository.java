@@ -40,10 +40,12 @@ public class GenreRepository {
     public Genre addGenre(Genre genre) {
         try (Connection connection = dataSource.getConnection()) {
             String sql = "INSERT INTO genre (name) VALUES (?)";
-            PreparedStatement pst = connection.prepareStatement(sql);
-            pst.setString(1,  genre.getName());
-            ResultSet rs = pst.executeQuery();
-            pst.executeUpdate();
+            Statement st = connection.createStatement();
+//            st.executeUpdate()
+//            PreparedStatement pst = connection.prepareStatement(sql);
+//            pst.setString(1, genre.getName());
+//            ResultSet rs = pst.executeQuery();
+//            pst.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -61,7 +63,7 @@ public class GenreRepository {
             PreparedStatement pst = connection.prepareStatement(sql);
             pst.setInt(1, id);
             ResultSet rs = pst.executeQuery();
-            if(rs.next()){
+            if (rs.next()) {
                 Genre genre = Genre.builder()
                         .id(rs.getInt("id"))
                         .name(rs.getString("name"))
@@ -75,6 +77,21 @@ public class GenreRepository {
     }
 
     public List<Genre> searchGenreByName(String name) {
+        List<Genre> matchesList = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "SELECT * FROM genre WHERE name = ?";
+            PreparedStatement pst = connection.prepareStatement(sql);
+            pst.setString(1, name);
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                    if (rs.getString("name").toLowerCase().contains(name.toLowerCase())) {
+                        Genre genre = Genre.builder().id(rs.getInt("id")).name(rs.getString("name")).build();
+                        matchesList.add(genre);
+                    }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
 //        List<Genre> matches = new ArrayList<>();
 //        for (Genre searchGenre : genreList) {
 //            if (searchGenre.getName().toLowerCase().contains(name.toLowerCase())) {
@@ -82,10 +99,18 @@ public class GenreRepository {
 //            }
 //        }
 //        return matches;
-        return null;
+        return new ArrayList<>(matchesList);
     }
 
     public void deleteGenreById(int id) {
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "DELETE FROM genre WHERE id = ?";
+            PreparedStatement pst = connection.prepareStatement(sql);
+            pst.setInt(1,id);
+            pst.executeUpdate(sql);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
 //        for (Genre genre : genreList) {
 //            if (genre.getId() == id) {
 //                genreList.remove(genre);
