@@ -40,12 +40,9 @@ public class GenreRepository {
     public Genre addGenre(Genre genre) {
         try (Connection connection = dataSource.getConnection()) {
             String sql = "INSERT INTO genre (name) VALUES (?)";
-            Statement st = connection.createStatement();
-//            st.executeUpdate()
-//            PreparedStatement pst = connection.prepareStatement(sql);
-//            pst.setString(1, genre.getName());
-//            ResultSet rs = pst.executeQuery();
-//            pst.executeUpdate();
+            PreparedStatement pst = connection.prepareStatement(sql);
+            pst.setString(1, genre.getName());
+            pst.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -54,7 +51,7 @@ public class GenreRepository {
 //        genre.setId(idGenre);
 //        genreList.add(genre);
 //        return genre;
-        return null;
+        return genre;
     }
 
     public Genre getGenreById(int id) {
@@ -71,7 +68,7 @@ public class GenreRepository {
                 return genre;
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Troubles with db");
         }
         return null;
     }
@@ -119,6 +116,16 @@ public class GenreRepository {
     }
 
     public Genre updateGenre(Genre genre) {
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "Update genre set name = '" + genre.getName() + "' WHERE id = " + genre.getId();
+//            String sql = "Update genre set name = ? WHERE id = ?";
+            PreparedStatement pst = connection.prepareStatement(sql);
+//            pst.setString(1, genre.getName());
+//            pst.setInt(2, genre.getId() );
+            pst.executeUpdate(sql);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
 //        for (Genre setNewGenreName : genreList) {
 //            if (genre.getId() == setNewGenreName.getId()) {
 //                setNewGenreName.setName(genre.getName());
@@ -126,5 +133,15 @@ public class GenreRepository {
 //        }
 //        return genre;
         return null;
+    }
+
+    public boolean exist(int id){
+        try (Connection connection = dataSource.getConnection()) {
+            String sql = "Select count(*) from genre where id = " + id;
+            Statement st = connection.createStatement();
+        }catch (SQLException e) {
+            throw new RuntimeException("Troubles with db");
+        }
+        return false;
     }
 }
