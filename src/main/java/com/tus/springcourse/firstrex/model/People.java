@@ -10,7 +10,6 @@ import java.util.Date;
 @Builder
 @Getter
 @Setter
-
 public class People {
 
     private int id;

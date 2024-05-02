@@ -1,6 +1,7 @@
 package com.tus.springcourse.firstrex.service;
 
 import com.tus.springcourse.firstrex.exception.EntityAlreadyExist;
+import com.tus.springcourse.firstrex.exception.EntityNotFound;
 import com.tus.springcourse.firstrex.model.Genre;
 import com.tus.springcourse.firstrex.repository.GenreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,12 +47,10 @@ public class GenreService {
     }
 
     public Genre updateGenre(Genre genre) {
-        List<Genre> listCheck = genreRepository.getGenreList();
-        for (Genre genreCheck : listCheck) {
-            if (genreCheck.getName().toLowerCase().equals(genre.getName().toLowerCase())) {
-                return null;
-            }
+        if(!genreRepository.exist(genre.getId())){
+            throw  new EntityNotFound();
         }
         return genreRepository.updateGenre(genre);
     }
+
 }
