@@ -1,15 +1,9 @@
 package com.tus.springcourse.firstrex.repository;
 
-import com.tus.springcourse.firstrex.exception.EntityNotFound;
 import com.tus.springcourse.firstrex.model.Genre;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.*;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -19,18 +13,21 @@ import java.util.List;
 @Repository
 public class GenreRepository {
 
+
     private final JdbcTemplate template;
 
     private final DataSource dataSource;
+
+    private GenreMapper genreMapper = new GenreMapper();
 
     public GenreRepository(JdbcTemplate template, DataSource dataSource) {
         this.template = template;
         this.dataSource = dataSource;
     }
 
+
     public List<Genre> getGenreList() {
         String sql = "SELECT * From genre order by id";
-        List<Genre> genreList = template.queryForList(sql, Genre.class);
 
 //        List<Genre> genreList = new ArrayList<>();
 //        try (Connection connection = dataSource.getConnection()) {
@@ -46,7 +43,8 @@ public class GenreRepository {
 //        } catch (SQLException e) {
 //            throw new RuntimeException(e);
 //        }
-        return genreList;
+
+        return template.query(sql, genreMapper);
     }
 
     public Genre addGenre(Genre genre) {
@@ -137,7 +135,7 @@ public class GenreRepository {
     }
 
     public Genre updateGenre(Genre genre) {
-        String sql= " Update genre set name = ? where id = (?)";
+        String sql = " Update genre set name = ? where id = (?)";
         template.update(sql, genre.getId());
 //        try (Connection connection = dataSource.getConnection()) {
 ////            String sql = "Update genre set name = '" + genre.getName() + "' WHERE id = " + genre.getId();
@@ -163,7 +161,7 @@ public class GenreRepository {
             ResultSet rs = st.executeQuery(sql);
             if (rs.next()) {
                 int i = rs.getInt(1);
-                if(i == 1){
+                if (i == 1) {
                     return true;
                 }
             }
@@ -175,4 +173,17 @@ public class GenreRepository {
         return false;
     }
 
+    public static class GenreMapper implements RowMapper<Genre> {
+        @Override
+        public Genre mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return Genre.builder()
+                    .id(rs.getInt("id"))
+                    .name(rs.getString("name"))
+                    .build();
+        }
+    }
+
+
 }
+
+
