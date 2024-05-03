@@ -3,9 +3,12 @@ package com.tus.springcourse.firstrex.repository;
 import com.tus.springcourse.firstrex.model.Genre;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.math.BigInteger;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,129 +31,40 @@ public class GenreRepository {
 
     public List<Genre> getGenreList() {
         String sql = "SELECT * From genre order by id";
-
-//        List<Genre> genreList = new ArrayList<>();
-//        try (Connection connection = dataSource.getConnection()) {
-//            Statement st = connection.createStatement();
-//            ResultSet rs = st.executeQuery("SELECT * From genre order by id");
-//            while (rs.next()) {
-//                Genre genre = Genre.builder()
-//                        .id(rs.getInt("id"))
-//                        .name(rs.getString("name"))
-//                        .build();
-//                genreList.add(genre);
-//            }
-//        } catch (SQLException e) {
-//            throw new RuntimeException(e);
-//        }
-
         return template.query(sql, genreMapper);
     }
 
     public Genre addGenre(Genre genre) {
-//        String sql = "INSERT INTO genre (name) VALUES (?)";
-//        template.update(sql, );
-//        try (Connection connection = dataSource.getConnection()) {
-//            String sql = "INSERT INTO genre (name) VALUES (?)";
-//            PreparedStatement pst = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-//            pst.setString(1, genre.getName());
-//            pst.executeUpdate();
-//            ResultSet rs = pst.getGeneratedKeys();
-//            int autoIncKeyFromApi = -1;
-//            if (rs.next()) {
-//                autoIncKeyFromApi = rs.getInt(1);
-//                genre.setId(autoIncKeyFromApi);
-//            }
-//            System.out.println("Key returned from getGeneratedKeys():"
-//                    + autoIncKeyFromApi);
-//        } catch (SQLException e) {
-//            throw new RuntimeException(e);
-//        }
-//        idGenre++;
-//        genre.setId(idGenre);
-//        genreList.add(genre);
-//        return genre;
+        String sql = "INSERT INTO genre (name) VALUES (?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        template.update(con -> {
+            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, genre.getName());
+            return ps;
+        }, keyHolder);
+
+        genre.setId(keyHolder.getKeyAs(BigInteger.class).intValue());
         return genre;
     }
 
     public Genre getGenreById(int id) {
-        try (Connection connection = dataSource.getConnection()) {
-            String sql = "SELECT * FROM genre WHERE id = ?";
-            PreparedStatement pst = connection.prepareStatement(sql);
-            pst.setInt(1, id);
-            ResultSet rs = pst.executeQuery();
-            if (rs.next()) {
-                Genre genre = Genre.builder()
-                        .id(rs.getInt("id"))
-                        .name(rs.getString("name"))
-                        .build();
-                return genre;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Troubles with db");
-        }
-        return null;
+        String sql =  "SELECT * FROM genre WHERE id = ?";
+        return template.queryForObject(sql, new Object[]{id}, genreMapper );
     }
 
     public List<Genre> searchGenreByName(String name) {
-        List<Genre> matchesList = new ArrayList<>();
-        try (Connection connection = dataSource.getConnection()) {
-            String sql = "select * from genre where `name` like ?";
-            PreparedStatement pst = connection.prepareStatement(sql);
-            pst.setString(1, "%" + name + "%");
-            ResultSet rs = pst.executeQuery();
-            while (rs.next()) {
-                Genre genre = Genre.builder()
-                        .id(rs.getInt("id"))
-                        .name(rs.getString("name"))
-                        .build();
-                matchesList.add(genre);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-//        List<Genre> matches = new ArrayList<>();
-//        for (Genre searchGenre : genreList) {
-//            if (searchGenre.getName().toLowerCase().contains(name.toLowerCase())) {
-//                matches.add(searchGenre);
-//            }
-//        }
-//        return matches;
-        return new ArrayList<>(matchesList);
+        String sql = "select * from genre where `name` like ?";
+        return template.query(sql, new Object[]{name}, genreMapper);
     }
 
     public void deleteGenreById(int id) {
-        try (Connection connection = dataSource.getConnection()) {
-            String sql = "DELETE FROM genre WHERE id = " + id;
-            PreparedStatement pst = connection.prepareStatement(sql);
-            pst.executeUpdate(sql);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-//        for (Genre genre : genreList) {
-//            if (genre.getId() == id) {
-//                genreList.remove(genre);
-//            }
-//        }
+        String sql = "DELETE FROM genre WHERE id = ?";
+        template.update(sql, id);
     }
 
     public Genre updateGenre(Genre genre) {
         String sql = " Update genre set name = ? where id = (?)";
         template.update(sql, genre.getId());
-//        try (Connection connection = dataSource.getConnection()) {
-////            String sql = "Update genre set name = '" + genre.getName() + "' WHERE id = " + genre.getId();
-////            PreparedStatement pst = connection.prepareStatement(sql);
-//////            pst.setString(1, genre.getName());
-//////            pst.setInt(2, genre.getId() );
-////            pst.executeUpdate(sql);
-////        } catch (SQLException e) {
-////            throw new RuntimeException(e);
-////        }
-//////        for (Genre setNewGenreName : genreList) {
-//////            if (genre.getId() == setNewGenreName.getId()) {
-//////                setNewGenreName.setName(genre.getName());
-//////            }
-//////        }
         return genre;
     }
 

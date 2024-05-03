@@ -4,27 +4,19 @@ import com.tus.springcourse.firstrex.model.Genre;
 import com.tus.springcourse.firstrex.service.GenreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/genres")
 public class GenreController {
 
-    private List<Genre> genreList = new ArrayList<>();
+    private final GenreService genreService;
 
-    @Autowired
-    private GenreService genreService;
-
-    public GenreController() {
-        Genre genre1 = Genre.builder().id(1).name("Drama").build();
-        Genre genre2 = Genre.builder().id(2).name("Action").build();
-        genreList.add(genre1);
-        genreList.add(genre2);
+    public GenreController(GenreService genreService) {
+        this.genreService = genreService;
     }
 
     @PostMapping("")
@@ -47,13 +39,13 @@ public class GenreController {
 
     @GetMapping("/search")
     public ResponseEntity<List<Genre>> searchGenreByName(@RequestParam("value") String name) {
-       List<Genre> response = genreService.searchGenreByName(name);
-       return ResponseEntity.status(HttpStatus.OK).body(response);
+        List<Genre> response = genreService.searchGenreByName(name);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteGenreById(@PathVariable int id) {
-      genreService.deleteGenreById(id);
+        genreService.deleteGenreById(id);
 //      return ResponseEntity.noContent().build();
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
