@@ -30,7 +30,11 @@ public class GenericExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.builder().code(2).massage("Entity not found").errTime(LocalDate.now()).build());
     }
 
-
+    @ExceptionHandler
+    public final ResponseEntity<Object> handleSqlErrorException(SqlErrorException exception){
+        exception.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.builder().code(3).massage("Sql err").errTime(LocalDate.now()).build());
+    }
 
 
 }

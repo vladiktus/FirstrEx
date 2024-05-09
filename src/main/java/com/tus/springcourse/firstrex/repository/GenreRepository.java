@@ -1,16 +1,22 @@
 package com.tus.springcourse.firstrex.repository;
 
+import com.tus.springcourse.firstrex.exception.EntityAlreadyExist;
+import com.tus.springcourse.firstrex.exception.EntityNotFound;
+import com.tus.springcourse.firstrex.exception.SqlErrorException;
 import com.tus.springcourse.firstrex.model.Genre;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import javax.sql.DataSource;
 import java.math.BigInteger;
-import java.sql.*;
-import java.util.ArrayList;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 @Repository
@@ -19,72 +25,79 @@ public class GenreRepository {
 
     private final JdbcTemplate template;
 
-    private final DataSource dataSource;
+
+    private static final String GET_ALL_GENRES = "SELECT * FROM genre ORDER BY id";
+    private static final String ADD_GENRE = "INSERT INTO genre (name) VALUES (?)";
+    private static final String GET_GENRE_BY_ID = "SELECT * FROM genre WHERE id = ?";
+    private static final String SEARCH_GENRE_BY_NAME = "select * from genre where `name` like ?";
+
+    private static final String DELETE_GENRE_BY_ID = "DELETE FROM genre WHERE id = ?";
+
+    private static final String UPDATE_GENRE = "UPDATE genre set name = ? where id = ?";
+    private static final String EXIST_GENRE = "SELECT count(*) from genre where id = ?";
 
     private GenreMapper genreMapper = new GenreMapper();
 
-    public GenreRepository(JdbcTemplate template, DataSource dataSource) {
+    public GenreRepository(JdbcTemplate template) {
         this.template = template;
-        this.dataSource = dataSource;
     }
 
 
     public List<Genre> getGenreList() {
-        String sql = "SELECT * From genre order by id";
-        return template.query(sql, genreMapper);
+        return template.query(GET_ALL_GENRES, genreMapper);
     }
 
     public Genre addGenre(Genre genre) {
-        String sql = "INSERT INTO genre (name) VALUES (?)";
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        template.update(con -> {
-            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, genre.getName());
-            return ps;
-        }, keyHolder);
+        try {
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            template.update(con -> {
+                PreparedStatement ps = con.prepareStatement(ADD_GENRE, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, genre.getName());
+                return ps;
+            }, keyHolder);
 
-        genre.setId(keyHolder.getKeyAs(BigInteger.class).intValue());
-        return genre;
+            genre.setId(keyHolder.getKeyAs(BigInteger.class).intValue());
+            return genre;
+        } catch (DuplicateKeyException e) {
+            e.printStackTrace();
+            throw new EntityAlreadyExist();
+        }
     }
 
     public Genre getGenreById(int id) {
-        String sql =  "SELECT * FROM genre WHERE id = ?";
-        return template.queryForObject(sql, new Object[]{id}, genreMapper );
+        try {
+            return template.queryForObject(GET_GENRE_BY_ID, new Object[]{id}, genreMapper);
+        } catch (EmptyResultDataAccessException e) {
+            e.printStackTrace();
+            throw new EntityNotFound();
+        }
     }
 
     public List<Genre> searchGenreByName(String name) {
-        String sql = "select * from genre where `name` like ?";
-        return template.query(sql, new Object[]{name}, genreMapper);
+        return template.query(SEARCH_GENRE_BY_NAME, new Object[]{name}, genreMapper);
     }
 
     public void deleteGenreById(int id) {
-        String sql = "DELETE FROM genre WHERE id = ?";
-        template.update(sql, id);
+        int count = template.update(DELETE_GENRE_BY_ID, id);
+        if (count != 1) {
+            throw new SqlErrorException();
+        }
     }
 
     public Genre updateGenre(Genre genre) {
-        String sql = " Update genre set name = ? where id = (?)";
-        template.update(sql, genre.getId());
+        int count = template.update(UPDATE_GENRE, genre.getName(), genre.getId());
+        if (count != 1) {
+            throw new SqlErrorException();
+        }
         return genre;
     }
 
     public boolean exist(int id) {
-        try (Connection connection = dataSource.getConnection()) {
-            String sql = "Select count(*) from genre where id = " + id;
-            Statement st = connection.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            if (rs.next()) {
-                int i = rs.getInt(1);
-                if (i == 1) {
-                    return true;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            System.out.println(e.getMessage());
-            throw new RuntimeException("Troubles with db");
+        int count = template.queryForObject(EXIST_GENRE, new Object[]{id}, Integer.class);
+        if (count != 1) {
+            return false;
         }
-        return false;
+        return true;
     }
 
     public static class GenreMapper implements RowMapper<Genre> {
@@ -96,7 +109,6 @@ public class GenreRepository {
                     .build();
         }
     }
-
 
 }
 
