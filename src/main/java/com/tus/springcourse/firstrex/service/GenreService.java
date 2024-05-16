@@ -33,6 +33,7 @@ public class GenreService {
      * @return The added genre.
      */
     public Genre addGenre(Genre genre) {
+        genre.setName("QQQ" + genre.getName());
         return genreRepository.addGenre(genre);
     }
 
