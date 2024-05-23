@@ -27,20 +27,20 @@ public class ArtistsController {
 
     @GetMapping("")
     public ResponseEntity<List<Artist>> getListOfArtists() {
-        List<Artist> responce = artistsService.getListOfArtists();
-        return ResponseEntity.status(HttpStatus.OK).body(responce);
+        List<Artist> response = artistsService.getListOfArtists();
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Artist> getArtistById(@PathVariable int id){
-        Artist responce = artistsService.getArtistById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(responce);
+        Artist response = artistsService.getArtistById(id);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/search")
     public ResponseEntity<List<Artist>> searchArtistByName(@RequestParam("value") String name){
-        List<Artist> responce = artistsService.searchArtistByName(name);
-        return ResponseEntity.status(HttpStatus.OK).body(responce);
+        List<Artist> response = artistsService.searchArtistByName(name);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
@@ -51,8 +51,8 @@ public class ArtistsController {
 
     @PutMapping("")
     public ResponseEntity<Artist> updateArtist(@RequestBody Artist artist){
-        Artist responce = artistsService.updateArtist(artist);
-        return ResponseEntity.status(HttpStatus.OK).body(responce);
+        Artist response = artistsService.updateArtist(artist);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
 }

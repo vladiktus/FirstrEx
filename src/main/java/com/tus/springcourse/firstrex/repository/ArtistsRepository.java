@@ -18,6 +18,9 @@ import java.sql.*;
 import java.util.List;
 
 
+/**
+ * Repository class for managing database operations related to artists.
+ */
 @Repository
 public class ArtistsRepository {
 
@@ -42,22 +45,22 @@ public class ArtistsRepository {
 
     private static final String EXIST_ARTISTS = "SELECT count(*) FROM artists WHERE id = ?";
 
-    private static final String SEARCH_ATRIST_BY_NAME = """
-            SELECT\s
-                artists.id,\s
-                artists.name,\s
-                artists.birth_date,\s
-                artists.gender,\s
+    private static final String SEARCH_ARTIST_BY_NAME = """
+            SELECT
+                artists.id,
+                artists.name,
+                artists.birth_date,
+                artists.gender,
                 JSON_ARRAYAGG(JSON_OBJECT('id', roles.id, 'name', roles.name)) AS roles
-            FROM\s
-                artists\s
-            LEFT JOIN\s
-                artists_roles ON artists.id = artists_roles.artists_id\s
-            LEFT JOIN\s
-                roles ON artists_roles.roles_id = roles.id\s
-            WHERE\s
-                artists.name LIKE "Jason Statham"
-            GROUP BY\s
+            FROM
+                artists
+            LEFT JOIN
+                artists_roles ON artists.id = artists_roles.artists_id
+            LEFT JOIN
+                roles ON artists_roles.roles_id = roles.id
+            WHERE
+                artists.name LIKE ?
+            GROUP BY
                 artists.id, artists.name, artists.birth_date, artists.gender;
             """;
 
@@ -66,10 +69,11 @@ public class ArtistsRepository {
             SET name = ?, birth_date = ?, gender = ?
             WHERE id = ?;          
             """;
+
     private static final String ADD_ARTIST_ROLE = "INSERT INTO artists_roles (artists_id, roles_id) VALUES (?, ?)";
 
     private static final String DELETE_ARTIST_BY_ID = "DELETE FROM artists WHERE id = ?";
-    private static final String DELETE_ARTIST_ROLES = "DELETE FROM artists_roles WHERE artist_id = ?";
+    private static final String DELETE_ARTIST_ROLES = "DELETE FROM artists_roles WHERE artists_id = ?";
     private static final String GET_ARTIST_BY_ID = "SELECT \n" +
             "    artists.id, \n" +
             "    artists.name, \n" +
@@ -96,10 +100,21 @@ public class ArtistsRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    /**
+     * Retrieves a list of all artists.
+     *
+     * @return a list of artists
+     */
     public List<Artist> getArtistList() {
         return jdbcTemplate.query(GET_ALL_ARTISTS, artistsMapper);
     }
 
+    /**
+     * Deletes an artist by their ID.
+     *
+     * @param id the ID of the artist to delete
+     * @throws SqlErrorException if the delete operation fails
+     */
     public void deleteArtistById(int id) {
         int count = jdbcTemplate.update(DELETE_ARTIST_BY_ID, id);
         if (count != 1) {
@@ -107,6 +122,13 @@ public class ArtistsRepository {
         }
     }
 
+    /**
+     * Adds a new artist to the repository.
+     *
+     * @param artist the artist to add
+     * @return the added artist with the generated ID
+     * @throws EntityAlreadyExist if the artist already exists
+     */
     public Artist addArtist(Artist artist) {
         try {
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -127,14 +149,32 @@ public class ArtistsRepository {
         }
     }
 
+    /**
+     * Deletes all roles associated with a specific artist.
+     *
+     * @param artistId the ID of the artist
+     */
     public void deleteArtistRole(int artistId) {
         jdbcTemplate.update(DELETE_ARTIST_ROLES, artistId);
     }
 
+    /**
+     * Adds a role to a specific artist.
+     *
+     * @param artistId the ID of the artist
+     * @param roleId the ID of the role
+     */
     public void addArtistRole(int artistId, int roleId) {
         jdbcTemplate.update(ADD_ARTIST_ROLE, artistId, roleId);
     }
 
+    /**
+     * Retrieves an artist by their ID.
+     *
+     * @param id the ID of the artist
+     * @return the artist with the given ID
+     * @throws EntityNotFound if the artist is not found
+     */
     public Artist getArtistById(int id) {
         try {
             return jdbcTemplate.queryForObject(GET_ARTIST_BY_ID, new Object[]{id}, artistsMapper);
@@ -144,23 +184,45 @@ public class ArtistsRepository {
         }
     }
 
+    /**
+     * Searches for artists by their name.
+     *
+     * @param name the name to search for
+     * @return a list of artists matching the given name
+     */
     public List<Artist> searchArtistByName(String name) {
-        return jdbcTemplate.query(SEARCH_ATRIST_BY_NAME, new Object[]{name}, artistsMapper);
+        return jdbcTemplate.query(SEARCH_ARTIST_BY_NAME, new Object[]{"%" + name + "%"}, artistsMapper);
     }
 
+    /**
+     * Checks if an artist exists by their ID.
+     *
+     * @param id the ID of the artist
+     * @return true if the artist exists, false otherwise
+     */
     public boolean exist(int id) {
         int count = jdbcTemplate.queryForObject(EXIST_ARTISTS, new Object[]{id}, Integer.class);
         return count == 1;
     }
 
+    /**
+     * Updates an existing artist.
+     *
+     * @param artist the artist with updated information
+     * @return the updated artist
+     * @throws SqlErrorException if the update operation fails
+     */
     public Artist updateArtist(Artist artist) {
-        int count = jdbcTemplate.update(UPDATE_ARTIST, artist.getName(), Date.valueOf(artist.getBirthDate()), artist.getGender(), artist.getRoles());
+        int count = jdbcTemplate.update(UPDATE_ARTIST, artist.getName(), Date.valueOf(artist.getBirthDate()), artist.getGender(), artist.getId());
         if (count != 1) {
             throw new SqlErrorException();
         }
         return artist;
     }
 
+    /**
+     * RowMapper implementation for mapping ResultSet rows to Artist objects.
+     */
     public static class ArtistsMapper implements RowMapper<Artist> {
         @Override
         public Artist mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -175,3 +237,4 @@ public class ArtistsRepository {
     }
 
 }
+
