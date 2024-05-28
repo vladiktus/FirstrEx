@@ -1,19 +1,22 @@
 package com.tus.springcourse.firstrex.util;
 
+import java.util.List;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tus.springcourse.firstrex.model.Role;
-
-import java.io.IOException;
-import java.util.List;
+import com.tus.springcourse.firstrex.model.Genre;
+import com.tus.springcourse.firstrex.model.RoleOld;
+import com.tus.springcourse.firstrex.model.db.ArtistDb;
 
 /**
  * Utility class for converting JSON strings to objects and vice versa.
  */
 public class JsonConverter {
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    /**
+     * Utility class for converting JSON strings to objects and vice versa.
+     */
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     /**
      * Converts a JSON string to a list of Role objects.
@@ -22,10 +25,32 @@ public class JsonConverter {
      * @return a list of Role objects
      * @throws RuntimeException if the JSON processing fails
      */
-    public static List<Role> getListOfRoles(String json) {
+    public static List<RoleOld> getListOfRoles(String json) {
         try {
-            return objectMapper.readValue(json, new TypeReference<List<Role>>() {});
-        } catch (JsonProcessingException e) {
+            return OBJECT_MAPPER.readValue(json, new TypeReference<List<RoleOld>>() {
+            });
+        }
+        catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static List<Genre> getListOfGenres(String json) {
+        try {
+            return OBJECT_MAPPER.readValue(json, new TypeReference<List<Genre>>() {
+            });
+        }
+        catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static List<ArtistDb> getListOfArtistDb(String json) {
+        try {
+            return OBJECT_MAPPER.readValue(json, new TypeReference<List<ArtistDb>>() {
+            });
+        }
+        catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
@@ -40,8 +65,9 @@ public class JsonConverter {
      */
     public Object convertJsonToObject(String json, Class clazz) {
         try {
-            return objectMapper.readValue(json, clazz);
-        } catch (JsonProcessingException e) {
+            return OBJECT_MAPPER.readValue(json, clazz);
+        }
+        catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }

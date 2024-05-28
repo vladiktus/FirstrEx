@@ -1,14 +1,14 @@
 package com.tus.springcourse.firstrex.exception;
 
-import com.tus.springcourse.firstrex.model.ErrorResponse;
+import java.time.LocalDate;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
+import com.tus.springcourse.firstrex.model.ErrorResponse;
 
 /**
  * A global exception handler for handling exceptions thrown by controllers within the application.

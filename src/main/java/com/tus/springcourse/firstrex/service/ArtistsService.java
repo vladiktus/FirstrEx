@@ -1,14 +1,14 @@
 package com.tus.springcourse.firstrex.service;
 
-import com.tus.springcourse.firstrex.exception.EntityNotFound;
-import com.tus.springcourse.firstrex.model.Artist;
-import com.tus.springcourse.firstrex.model.Role;
-import com.tus.springcourse.firstrex.repository.ArtistsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.tus.springcourse.firstrex.exception.EntityNotFound;
+import com.tus.springcourse.firstrex.model.Artist;
+import com.tus.springcourse.firstrex.model.RoleOld;
+import com.tus.springcourse.firstrex.repository.ArtistsRepository;
 
 /**
  * Service class for managing artists.
@@ -16,8 +16,19 @@ import java.util.List;
 @Service
 public class ArtistsService {
 
-    @Autowired
-    private ArtistsRepository artistsRepository;
+    /**
+     * Repository for managing artist-related database operations.
+     */
+    private final ArtistsRepository artistsRepository;
+
+    /**
+     * Constructs a new ArtistsService with the specified ArtistsRepository.
+     *
+     * @param artistsRepository The ArtistsRepository to be used by this service.
+     */
+    public ArtistsService(ArtistsRepository artistsRepository) {
+        this.artistsRepository = artistsRepository;
+    }
 
     /**
      * Adds a new artist to the repository.
@@ -28,9 +39,6 @@ public class ArtistsService {
     @Transactional
     public Artist addArtist(Artist artist) {
         Artist newArtist = artistsRepository.addArtist(artist);
-        for (Role role : artist.getRoles()) {
-            artistsRepository.addArtistRole(newArtist.getId(), role.getId());
-        }
         return newArtist;
     }
 
@@ -49,7 +57,7 @@ public class ArtistsService {
      * @param name the name to search for
      * @return a list of artists matching the given name
      */
-    public List<Artist> searchArtistByName(String name){
+    public List<Artist> searchArtistByName(String name) {
         return artistsRepository.searchArtistByName(name);
     }
 
@@ -59,7 +67,7 @@ public class ArtistsService {
      * @param id the ID of the artist
      * @return the artist with the given ID
      */
-    public Artist getArtistById(int id){
+    public Artist getArtistById(int id) {
         return artistsRepository.getArtistById(id);
     }
 
@@ -70,7 +78,6 @@ public class ArtistsService {
      */
     @Transactional
     public void deleteArtistById(int id) {
-        artistsRepository.deleteArtistRole(id);
         artistsRepository.deleteArtistById(id);
     }
 
@@ -82,15 +89,11 @@ public class ArtistsService {
      * @throws EntityNotFound if the artist does not exist
      */
     @Transactional
-    public Artist updateArtist(Artist artist){
+    public Artist updateArtist(Artist artist) {
         if (!artistsRepository.exist(artist.getId())) {
             throw new EntityNotFound();
         }
         Artist updatedArtist = artistsRepository.updateArtist(artist);
-        artistsRepository.deleteArtistRole(updatedArtist.getId());
-        for (Role role : artist.getRoles()) {
-            artistsRepository.addArtistRole(updatedArtist.getId(), role.getId());
-        }
         return updatedArtist;
     }
 }

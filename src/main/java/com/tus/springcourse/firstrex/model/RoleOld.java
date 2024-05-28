@@ -9,7 +9,7 @@ import lombok.*;
 @Setter
 @Getter
 @EqualsAndHashCode
-public class Role {
+public class RoleOld {
 
     private int id;
     private String name;

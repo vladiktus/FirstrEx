@@ -1,9 +1,12 @@
 package com.tus.springcourse.firstrex.repository;
 
-import com.tus.springcourse.firstrex.exception.EntityAlreadyExist;
-import com.tus.springcourse.firstrex.exception.EntityNotFound;
-import com.tus.springcourse.firstrex.exception.SqlErrorException;
-import com.tus.springcourse.firstrex.model.Genre;
+import java.math.BigInteger;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,12 +15,10 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigInteger;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
+import com.tus.springcourse.firstrex.exception.EntityAlreadyExist;
+import com.tus.springcourse.firstrex.exception.EntityNotFound;
+import com.tus.springcourse.firstrex.exception.SqlErrorException;
+import com.tus.springcourse.firstrex.model.Genre;
 
 /**
  * This class provides data access methods for managing genres in the database.
@@ -25,20 +26,49 @@ import java.util.List;
 @Repository
 public class GenreRepository {
 
-
+    /**
+     * The JdbcTemplate used for interacting with the database.
+     */
     private final JdbcTemplate template;
 
-
+    /**
+     * SQL query to retrieve all genres.
+     */
     private static final String GET_ALL_GENRES = "SELECT * FROM genre ORDER BY id";
+
+    /**
+     * SQL query to add a new genre.
+     */
     private static final String ADD_GENRE = "INSERT INTO genre (name) VALUES (?)";
+
+    /**
+     * SQL query to retrieve a genre by its ID.
+     */
     private static final String GET_GENRE_BY_ID = "SELECT * FROM genre WHERE id = ?";
+
+    /**
+     * SQL query to search for genres by name.
+     */
     private static final String SEARCH_GENRE_BY_NAME = "SELECT * FROM genre WHERE `name` LIKE ?";
 
+    /**
+     * SQL query to delete a genre by its ID.
+     */
     private static final String DELETE_GENRE_BY_ID = "DELETE FROM genre WHERE id = ?";
 
+    /**
+     * SQL query to update a genre.
+     */
     private static final String UPDATE_GENRE = "UPDATE genre SET name = ? WHERE id = ?";
+
+    /**
+     * SQL query to check if a genre exists by its ID.
+     */
     private static final String EXIST_GENRE = "SELECT count(*) FROM genre WHERE id = ?";
 
+    /**
+     * Mapper for mapping ResultSet rows to Genre objects.
+     */
     private final GenreMapper genreMapper = new GenreMapper();
 
     /**
@@ -77,7 +107,8 @@ public class GenreRepository {
 
             genre.setId(keyHolder.getKeyAs(BigInteger.class).intValue());
             return genre;
-        } catch (DuplicateKeyException e) {
+        }
+        catch (DuplicateKeyException e) {
             e.printStackTrace();
             throw new EntityAlreadyExist();
         }
@@ -92,8 +123,9 @@ public class GenreRepository {
      */
     public Genre getGenreById(int id) {
         try {
-            return template.queryForObject(GET_GENRE_BY_ID, new Object[]{id}, genreMapper);
-        } catch (EmptyResultDataAccessException e) {
+            return template.queryForObject(GET_GENRE_BY_ID, genreMapper, id);
+        }
+        catch (EmptyResultDataAccessException e) {
             e.printStackTrace();
             throw new EntityNotFound();
         }
@@ -106,7 +138,7 @@ public class GenreRepository {
      * @return A list of genres matching the specified name.
      */
     public List<Genre> searchGenreByName(String name) {
-        return template.query(SEARCH_GENRE_BY_NAME, new Object[]{name}, genreMapper);
+        return template.query(SEARCH_GENRE_BY_NAME, genreMapper, "%" + name + "%");
     }
 
     /**
@@ -144,7 +176,7 @@ public class GenreRepository {
      * @return True if the genre exists, false otherwise.
      */
     public boolean exist(int id) {
-        int count = template.queryForObject(EXIST_GENRE, new Object[]{id}, Integer.class);
+        int count = template.queryForObject(EXIST_GENRE, Integer.class, id);
         return count == 1;
     }
 
@@ -152,12 +184,13 @@ public class GenreRepository {
      * Mapper class for mapping ResultSet rows to Genre objects.
      */
     public static class GenreMapper implements RowMapper<Genre> {
+
         @Override
         public Genre mapRow(ResultSet rs, int rowNum) throws SQLException {
             return Genre.builder()
-                    .id(rs.getInt("id"))
-                    .name(rs.getString("name"))
-                    .build();
+                .id(rs.getInt("id"))
+                .name(rs.getString("name"))
+                .build();
         }
     }
 

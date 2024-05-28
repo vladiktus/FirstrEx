@@ -1,10 +1,13 @@
 package com.tus.springcourse.firstrex.repository;
 
-import com.tus.springcourse.firstrex.exception.EntityAlreadyExist;
-import com.tus.springcourse.firstrex.exception.EntityNotFound;
-import com.tus.springcourse.firstrex.exception.SqlErrorException;
-import com.tus.springcourse.firstrex.model.Artist;
-import com.tus.springcourse.firstrex.util.JsonConverter;
+import java.math.BigInteger;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,9 +16,11 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigInteger;
-import java.sql.*;
-import java.util.List;
+import com.tus.springcourse.firstrex.exception.EntityAlreadyExist;
+import com.tus.springcourse.firstrex.exception.EntityNotFound;
+import com.tus.springcourse.firstrex.exception.SqlErrorException;
+import com.tus.springcourse.firstrex.model.Artist;
+import com.tus.springcourse.firstrex.util.JsonConverter;
 
 
 /**
@@ -24,78 +29,108 @@ import java.util.List;
 @Repository
 public class ArtistsRepository {
 
+    /**
+     * The JdbcTemplate used for interacting with the database.
+     */
     private final JdbcTemplate jdbcTemplate;
 
-    private static final String GET_ALL_ARTISTS = "SELECT \n" +
-            "    artists.id, \n" +
-            "    artists.name, \n" +
-            "    artists.birth_date,\n" +
-            "    artists.gender,\n" +
-            "    json_arrayagg(json_object('id', roles.id, 'name', roles.name)) AS roles\n" +
-            "FROM \n" +
-            "    kino_view.artists \n" +
-            "LEFT JOIN \n" +
-            "    artists_roles ON artists.id = artists_roles.artists_id \n" +
-            "LEFT JOIN \n" +
-            "    roles ON artists_roles.roles_id = roles.id \n" +
-            "GROUP BY \n" +
-            "    artists.id, artists.name \n" +
-            "ORDER BY \n" +
-            "    artists.id ";
+    /**
+     * SQL query to retrieve all artists.
+     */
+    private static final String GET_ALL_ARTISTS = """
+        SELECT
+            artists.id,
+            artists.name,
+            artists.birth_date,
+            artists.gender,
+            json_arrayagg(json_object('id', roles.id, 'name', roles.name)) AS roles
+        FROM
+            kino_view.artists
+        LEFT JOIN
+            artists_roles ON artists.id = artists_roles.artist_id
+        LEFT JOIN
+            roles ON artists_roles.role_id = role.id
+        GROUP BY
+            artists.id, artists.name
+        ORDER BY
+            artists.id
+        """;
 
+    /**
+     * SQL query to check if an artist exists by their ID.
+     */
     private static final String EXIST_ARTISTS = "SELECT count(*) FROM artists WHERE id = ?";
 
+    /**
+     * SQL query to search for artists by name.
+     */
     private static final String SEARCH_ARTIST_BY_NAME = """
-            SELECT
-                artists.id,
-                artists.name,
-                artists.birth_date,
-                artists.gender,
-                JSON_ARRAYAGG(JSON_OBJECT('id', roles.id, 'name', roles.name)) AS roles
-            FROM
-                artists
-            LEFT JOIN
-                artists_roles ON artists.id = artists_roles.artists_id
-            LEFT JOIN
-                roles ON artists_roles.roles_id = roles.id
-            WHERE
-                artists.name LIKE ?
-            GROUP BY
-                artists.id, artists.name, artists.birth_date, artists.gender;
-            """;
+        SELECT
+        	artists.id,
+        	artists.name,
+        	artists.birth_date,
+        	artists.gender,
+        	json_arrayagg(json_object('role', movies_artists.role)) AS roles
+        FROM
+        	artists
+        LEFT JOIN
+        	movies_artists ON artists.id = movies_artists.artist_id
+        WHERE
+        	artists.name LIKE ?
+        GROUP BY
+        	artists.id;
+        """;
 
+    /**
+     * SQL query to update an artist.
+     */
     private static final String UPDATE_ARTIST = """
-            UPDATE artists
-            SET name = ?, birth_date = ?, gender = ?
-            WHERE id = ?;          
-            """;
+        UPDATE artists
+        SET name = ?, birth_date = ?, gender = ?
+        WHERE id = ?;
+        """;
 
-    private static final String ADD_ARTIST_ROLE = "INSERT INTO artists_roles (artists_id, roles_id) VALUES (?, ?)";
-
+    /**
+     * SQL query to delete an artist by their ID.
+     */
     private static final String DELETE_ARTIST_BY_ID = "DELETE FROM artists WHERE id = ?";
-    private static final String DELETE_ARTIST_ROLES = "DELETE FROM artists_roles WHERE artists_id = ?";
-    private static final String GET_ARTIST_BY_ID = "SELECT \n" +
-            "    artists.id, \n" +
-            "    artists.name, \n" +
-            "    artists.birth_date, \n" +
-            "    artists.gender, \n" +
-            "    JSON_ARRAYAGG(JSON_OBJECT('id', roles.id, 'name', roles.name)) AS roles\n" +
-            "FROM \n" +
-            "    artists \n" +
-            "LEFT JOIN \n" +
-            "    artists_roles ON artists.id = artists_roles.artists_id \n" +
-            "LEFT JOIN \n" +
-            "    roles ON artists_roles.roles_id = roles.id \n" +
-            "WHERE \n" +
-            "    artists.id = ?\n" +
-            "GROUP BY \n" +
-            "    artists.id, artists.name, artists.birth_date, artists.gender;\n";
 
-    private static final String ADD_ARTIST = "INSERT INTO artists (name, birth_date, gender)\n" +
-            "VALUES (?,?,?);";
+    /**
+     * SQL query to retrieve an artist by their ID.
+     */
+    private static final String GET_ARTIST_BY_ID = """
+        SELECT
+           artists.id,
+           artists.name,
+           artists.birth_date,
+           artists.gender,
+           json_arrayagg(json_object('role', movies_artists.role)) AS roles
+       FROM
+           artists
+       LEFT JOIN
+           movies_artists ON artists.id = movies_artists.artist_id
+                
+       WHERE
+            artists.id = ?
+       GROUP BY
+            artists.id;
+       """;
 
+    /**
+     * SQL query to add a new artist.
+     */
+    private static final String ADD_ARTIST = "INSERT INTO artists (name, birth_date, gender) VALUES (?,?,?);";
+
+    /**
+     * Mapper for mapping ResultSet rows to Artist objects.
+     */
     private final ArtistsMapper artistsMapper = new ArtistsMapper();
 
+    /**
+     * Constructs a new ArtistsRepository with the specified JdbcTemplate.
+     *
+     * @param jdbcTemplate The JdbcTemplate to be used by this repository.
+     */
     public ArtistsRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -143,31 +178,12 @@ public class ArtistsRepository {
 
             artist.setId(keyHolder.getKeyAs(BigInteger.class).intValue());
             return artist;
-        } catch (DuplicateKeyException e) {
+        }
+        catch (DuplicateKeyException e) {
             e.printStackTrace();
             throw new EntityAlreadyExist();
         }
     }
-
-    /**
-     * Deletes all roles associated with a specific artist.
-     *
-     * @param artistId the ID of the artist
-     */
-    public void deleteArtistRole(int artistId) {
-        jdbcTemplate.update(DELETE_ARTIST_ROLES, artistId);
-    }
-
-    /**
-     * Adds a role to a specific artist.
-     *
-     * @param artistId the ID of the artist
-     * @param roleId the ID of the role
-     */
-    public void addArtistRole(int artistId, int roleId) {
-        jdbcTemplate.update(ADD_ARTIST_ROLE, artistId, roleId);
-    }
-
     /**
      * Retrieves an artist by their ID.
      *
@@ -177,8 +193,9 @@ public class ArtistsRepository {
      */
     public Artist getArtistById(int id) {
         try {
-            return jdbcTemplate.queryForObject(GET_ARTIST_BY_ID, new Object[]{id}, artistsMapper);
-        } catch (EmptyResultDataAccessException e) {
+            return jdbcTemplate.queryForObject(GET_ARTIST_BY_ID, artistsMapper, id);
+        }
+        catch (EmptyResultDataAccessException e) {
             e.printStackTrace();
             throw new EntityNotFound();
         }
@@ -191,7 +208,7 @@ public class ArtistsRepository {
      * @return a list of artists matching the given name
      */
     public List<Artist> searchArtistByName(String name) {
-        return jdbcTemplate.query(SEARCH_ARTIST_BY_NAME, new Object[]{"%" + name + "%"}, artistsMapper);
+        return jdbcTemplate.query(SEARCH_ARTIST_BY_NAME, artistsMapper, "%" + name + "%");
     }
 
     /**
@@ -201,7 +218,7 @@ public class ArtistsRepository {
      * @return true if the artist exists, false otherwise
      */
     public boolean exist(int id) {
-        int count = jdbcTemplate.queryForObject(EXIST_ARTISTS, new Object[]{id}, Integer.class);
+        int count = jdbcTemplate.queryForObject(EXIST_ARTISTS, Integer.class, id);
         return count == 1;
     }
 
@@ -227,14 +244,13 @@ public class ArtistsRepository {
         @Override
         public Artist mapRow(ResultSet rs, int rowNum) throws SQLException {
             return Artist.builder()
-                    .id(rs.getInt("id"))
-                    .name(rs.getString("name"))
-                    .gender(rs.getString("gender"))
-                    .birthDate(rs.getDate("birth_date").toLocalDate())
-                    .roles(JsonConverter.getListOfRoles(rs.getString("roles")))
-                    .build();
+                .id(rs.getInt("id"))
+                .name(rs.getString("name"))
+                .gender(rs.getString("gender"))
+                .birthDate(rs.getDate("birth_date").toLocalDate())
+                .roles(JsonConverter.getListOfRoles(rs.getString("roles")))
+                .build();
         }
     }
-
 }
 

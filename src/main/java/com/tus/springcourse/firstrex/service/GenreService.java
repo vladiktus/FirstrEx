@@ -1,11 +1,12 @@
 package com.tus.springcourse.firstrex.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.tus.springcourse.firstrex.exception.EntityNotFound;
 import com.tus.springcourse.firstrex.model.Genre;
 import com.tus.springcourse.firstrex.repository.GenreRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * This class represents a service layer for managing operations related to genres.
@@ -15,6 +16,9 @@ import java.util.List;
 @Service
 public class GenreService {
 
+    /**
+     * Repository for managing genre-related database operations.
+     */
     private final GenreRepository genreRepository;
 
     /**

@@ -32,25 +32,25 @@ public class ArtistsController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Artist> getArtistById(@PathVariable int id){
+    public ResponseEntity<Artist> getArtistById(@PathVariable int id) {
         Artist response = artistsService.getArtistById(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Artist>> searchArtistByName(@RequestParam("value") String name){
+    public ResponseEntity<List<Artist>> searchArtistByName(@RequestParam("value") String name) {
         List<Artist> response = artistsService.searchArtistByName(name);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Artist> deleteArtistById(@PathVariable int id){
+    public ResponseEntity<Artist> deleteArtistById(@PathVariable int id) {
         artistsService.deleteArtistById(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @PutMapping("")
-    public ResponseEntity<Artist> updateArtist(@RequestBody Artist artist){
+    public ResponseEntity<Artist> updateArtist(@RequestBody Artist artist) {
         Artist response = artistsService.updateArtist(artist);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
